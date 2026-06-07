@@ -1,0 +1,38 @@
+@startuml
+title Create Game – Quickstart (1 human + 3 bots, auto-start)
+
+actor "Player" as P
+participant "Frontend\n(React + Zustand)" as FE
+participant "REST API" as REST
+participant "STOMP\n(WebSocket)" as STOMP
+participant "GameService" as SVC
+database "DB" as DB
+
+== Create the game ==
+P -> FE : select variant + bot difficulty, click "Create Game"\n(mode = singleplayer → quickStart)
+FE -> REST : POST /api/games { variantId, botDifficulty }
+REST -> SVC : createGame()
+SVC -> DB : save game, contracts, creator seat
+SVC --> REST : gameId
+REST --> FE : 201 Created — { gameId }
+
+== Connect to the game ==
+FE -> STOMP : connect to /ws, subscribe to game channels\n(/app/…/lobby · /app/…/public-state · /app/…/private-state)
+STOMP --> FE : lobby snapshot (creator seated, game not started)\npublic-state and private-state return null until game starts
+
+== Game start (no Lobby screen, no manual click) ==
+FE -> STOMP : on WebSocket connect, automatically\nSEND /app/games/{id}/lobby/start
+
+STOMP -> SVC : fillWithBots(gameId)
+SVC -> DB : save 3 bot player rows
+SVC --> STOMP : LobbyEventDTO
+STOMP --> FE : /topic/games/{id}/lobby — all 4 seats filled
+
+STOMP -> SVC : startGame(gameId)
+SVC -> DB : set status IN_PROGRESS; replay() → initialState
+SVC --> STOMP : GameUpdateBundle (initial state)
+STOMP --> FE : /topic/games/{id} — initial game state\n(first player must select a contract)
+STOMP --> FE : /user/queue/games/{id}/private-state — player's hand
+FE -> P : show Game Board
+
+@enduml

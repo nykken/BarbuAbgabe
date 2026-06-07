@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+    --color-gameboard: #DEEEDA;
+    --color-gameboard-dark: #bedbb6;
+    --color-button-hover: #000;
+    --color-text: #000;
+    --color-text-hover: #fff;
+    --color-menu-scores: #acddec;
+    --color-menu-settings: #f8e5af;
+    --color-menu-rules: #e0c7f8;
+    --color-menu-rules-accent: #a66fc8;
+    --color-playerN: #FF2AB1;
+    --color-playerW: #319bff;
+    --color-playerE: #51a84c;
+    --color-playerS: #FF6F27;
+    --color-disabled: #636363;
+}
+
+body {
+    background-color: #556551;
+}
+
+@theme {
+    @keyframes innerPulse {
+        0% { opacity: 0; transform: scale(0.8); }
+        50% { opacity: 0.7; transform: scale(1.2); }
+        100% { opacity: 0; transform: scale(1.4); }
+    }
+    --animate-inner-pulse: innerPulse 2s infinite;
+}

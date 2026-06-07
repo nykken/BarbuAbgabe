@@ -1,0 +1,42 @@
+# ── IntelliJ ──────────────────────────────
+.idea/
+*.iml
+
+# ── Java / Maven ──────────────────────────
+barbu-api/target/
+barbu-engine/target
+*.class
+*.jar
+*.war
+
+# ── Gradle (if used) ──────────────────────
+.gradle/
+build/
+
+# ── Spring Boot ───────────────────────────
+application-local.properties
+application-local.yml
+*.env
+.env*
+data/
+
+# ── Frontend (React / TypeScript) ─────────
+barbu-frontend/node_modules/
+barbu-frontend/package-lock.json
+
+# ── OS / misc ─────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── RSA Keys  ───────────────
+barbu-api/src/main/resources/certs/
+
+# ── Test output ───────────────────────────
+*.log
+
+# ── Bot simulations ───────────────────────
+benchmark-results/
+mcts-simulations/target/
+
+# ── Venv ───────────────────────
+analysis/.venv

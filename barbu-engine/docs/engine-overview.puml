@@ -1,0 +1,118 @@
+
+@startuml Engine Overview
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide empty members
+
+
+package "org.engine.game" {
+
+    enum Player {
+        NORTH
+        EAST
+        SOUTH
+        WEST
+        --
+        +next() : Player
+        +previous() : Player
+    }
+
+    class GameSettings <<record>> {
+        contracts : List<Contract>
+        deckVariant : Deck.Variant
+        rankingOrder : RankingOrder
+    }
+
+    class History {
+        +with(Player, ContractState) : History
+        +scoreFor(Player) : int
+        +cumulativeScores() : Map<Player,Integer>
+    }
+
+    interface Move {
+    }
+    class SelectContract <<record>> {
+        player : Player
+        contract : Contract
+    }
+    class PlayCard <<record>> {
+        player : Player
+        card : Card
+    }
+    class Pass <<record>> {
+        player : Player
+    }
+}
+
+
+Move <|.. SelectContract
+Move <|.. PlayCard
+Move <|.. Pass
+
+
+package "org.engine.contract" {
+
+    interface Contract {
+        +start(Player, Map<Player,Hand>) : ContractState
+    }
+
+    abstract class ContractState {
+        +currentPlayer() : Player
+        +hands() : Map<Player,Hand>
+        +legalMoves() : List<Move>
+        +applyMove(Move) : ContractState
+        +isFinished() : boolean
+        +scores() : Map<Player,Integer>
+    }
+}
+
+package "org.engine.game.state" {
+
+    abstract class GameState <<sealed>> {
+        +settings() : GameSettings
+        +history() : History
+        +{static} newGame(GameSettings, long) : GameState
+        +{static} replay(GameSettings, long, List<Move>) : GameState
+        +remainingContracts(Player) : List<Contract>
+        +cumulativeScores() : Map<Player,Integer>
+    }
+
+    abstract class ActiveGameState <<sealed>> {
+        +currentPlayer() : Player
+        +currentDeclarer() : Player
+        +hands() : Map<Player,Hand>
+        +legalMoves() : List<Move>
+        +applyMove(Move) : GameState
+    }
+
+    class WaitingForContractSelection <<final>> {
+    }
+
+    class ContractInProgress <<final>> {
+        +activeContract() : ContractState
+    }
+
+    class GameOver <<final>> {
+    }
+}
+
+GameState         <|-- ActiveGameState
+GameState         <|-- GameOver
+ActiveGameState   <|-- WaitingForContractSelection
+ActiveGameState   <|-- ContractInProgress
+
+' Key field references
+GameState          --> GameSettings  : settings
+GameState          --> History       : history
+GameSettings       --> Contract      : contracts
+ContractInProgress --> ContractState : activeContract
+ContractState      --> Contract      : contract
+ActiveGameState    --> Player        : currentDeclarer
+
+' Move subtypes accepted per state
+WaitingForContractSelection ..> SelectContract : accepts
+ContractInProgress          ..> PlayCard       : accepts
+ContractInProgress          ..> Pass           : accepts
+
+@enduml

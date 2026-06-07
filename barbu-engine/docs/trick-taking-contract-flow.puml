@@ -1,0 +1,27 @@
+@startuml trick-taking-contract-flow
+title Trick-Taking Contract Flow
+
+start
+
+note right
+  Declarer leads the first trick.
+end note
+
+repeat
+
+  repeat
+  :Current player plays a card;
+
+  repeat while (Trick Complete? \n(4 cards played)) is (no)
+  -> yes;
+  :Highest card of led suit wins the trick;
+
+
+backward:Winner leads the next trick;
+repeat while (Hands empty?) is (no)
+-> yes;
+
+:Score contract\n(depending on rules);
+
+stop
+@enduml

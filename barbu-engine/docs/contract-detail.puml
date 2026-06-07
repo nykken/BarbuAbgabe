@@ -1,0 +1,108 @@
+@startuml Contract Detail
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide empty members
+
+
+' ── base contract types ─────────────────────────────────────────────────────────
+
+package "org.engine.contract" {
+
+    interface Contract {
+        +start(Player, Map<Player,Hand>) : ContractState
+    }
+
+    interface PlayArea {
+    }
+
+    abstract class ContractState {
+        +contract() : Contract
+        +currentPlayer() : Player
+        +hands() : Map<Player,Hand>
+        +playArea() : PlayArea
+        +legalMoves() : List<Move>
+        +applyMove(Move) : ContractState
+        +isFinished() : boolean
+        +scores() : Map<Player,Integer>
+    }
+}
+
+ContractState --> Contract : contract
+ContractState --> PlayArea : playArea()
+
+
+' ── trick-taking ─────────────────────────────────────────────────────────
+
+package "org.engine.contract.trick" {
+
+    class TrickTakingContract <<record>> {
+        scoringPolicy : ScoringPolicy
+        leadRestriction : LeadRestriction
+    }
+
+    class TrickTakingState {
+        currentTrick : Trick
+        +tricksTaken() : Map<Player,Integer>
+    }
+
+    class Trick {
+        +ledSuit() : Suit
+        +winner() : Player
+        +isComplete() : boolean
+    }
+
+    interface ScoringPolicy {
+        +score(List<Trick>) : Map<Player,Integer>
+        +isFinished(Map<Player,Hand>) : boolean
+    }
+
+    interface LeadRestriction {
+        +restrictLeads(Set<Card>, List<Trick>) : Set<Card>
+    }
+}
+
+Contract      <|..  TrickTakingContract
+ContractState <|--  TrickTakingState
+PlayArea      <|..  Trick
+
+TrickTakingContract --> ScoringPolicy    : scoringPolicy
+TrickTakingContract --> LeadRestriction  : leadRestriction
+TrickTakingContract ..> TrickTakingState : <<creates>>
+TrickTakingState    --> Trick            : currentTrick
+
+
+' ── réussite ─────────────────────────────────────────────────────────
+
+package "org.engine.contract.reussite" {
+
+    class ReussiteContract <<record>> {
+        startingRank : Rank
+        placementPoints : List<Integer>
+        replayAfterRank : Rank
+    }
+
+    class ReussiteState {
+        finishOrder : List<Player>
+    }
+
+    class Tableau {
+        +isLegal(Card) : boolean
+        +with(Card) : Tableau
+    }
+
+    class SuitPile <<record>> {
+        low : Rank
+        high : Rank
+    }
+}
+
+Contract      <|..  ReussiteContract
+ContractState <|--  ReussiteState
+PlayArea      <|..  Tableau
+
+ReussiteContract ..> ReussiteState : <<creates>>
+ReussiteState    --> Tableau        : tableau
+Tableau          *-- SuitPile       : piles
+
+@enduml

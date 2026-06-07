@@ -1,0 +1,42 @@
+@startuml
+title Play a Card
+
+actor "Player" as P
+participant "Frontend\n(React + Zustand)" as FE
+participant "STOMP\n(WebSocket)" as STOMP
+participant "Backend\n(GameService)" as BE
+database "DB" as DB
+
+== Player submits a move ==
+P -> FE : click card (first click selects, second click plays)
+FE -> FE : check card is in legalMoves
+FE -> STOMP : SEND /app/games/{id}/move\n{ type: PLAY_CARD, card }
+
+== Server processes the move ==
+STOMP -> BE : deliver move to GameWebSocketController
+BE -> DB : replay all saved moves → reconstruct current GameState
+BE -> BE : validate move against engine rules
+
+alt move is illegal
+    BE --> FE : /user/queue/…/error — error message
+    FE -> P : show error
+else move is legal
+    BE -> DB : save GameMoveEntity
+    BE -> STOMP : /topic/games/{id} — PublicGameUpdateDTO
+    STOMP --> FE : public update (all players)
+    BE -> STOMP : /user/queue/…/private-state — PrivatePlayerStateDTO per human
+    STOMP --> FE : private update (hand + legal moves)
+    FE -> P : update Game Board
+
+    loop while next player is a bot
+        BE -> BE : bot chooses move (Random / MCTS / IS-MCTS)
+        BE -> DB : save bot GameMoveEntity
+        BE -> STOMP : /topic/games/{id} — PublicGameUpdateDTO
+        STOMP --> FE : public update (all players)
+        BE -> STOMP : /user/queue/…/private-state — PrivatePlayerStateDTO per human
+        STOMP --> FE : private update (hand + legal moves)
+        FE -> P : update Game Board
+    end
+end
+
+@enduml

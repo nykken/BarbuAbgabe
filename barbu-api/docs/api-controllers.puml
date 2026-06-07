@@ -1,0 +1,90 @@
+@startuml API Controllers
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+
+' ── Game (HTTP + WebSocket) ──────────────────────────────────────────────
+class GameRestController <<RestController>> {
+  +createGame(CreateGameRequest) : GameIdResponse
+  +joinGame(gameId) : void
+  +leaveGame(gameId) : void
+  +getGameVariantInfo(gameId) : VariantInfoDTO
+  +getCurrentGame() : GameIdResponse
+}
+
+class GameWebSocketController <<Controller>> {
+  +handleStart(gameId) : void
+  +handleMove(gameId, IncomingMoveDTO) : void
+  +handleGameExceptions(..) : void
+  ..@SubscribeMapping..
+  +handleLobbySubscription(gameId) : LobbyEventDTO
+  +handlePublicStateSubscription(gameId) : PublicGameUpdateDTO
+  +handlePrivateStateSubscription(gameId) : PrivatePlayerStateDTO
+}
+
+class GameService <<Service>> {
+  +createGame(..) : UUID
+  +joinGame(..) : void
+  +leaveGame(..) : Optional<LobbyEventDTO>
+  +applyMove(..) : void
+  +startGame(..) : void
+  +fillWithBots(..) : LobbyEventDTO
+  +getGameUpdate(..) : PublicGameUpdateDTO
+  +getPrivatePlayerState(..) : PrivatePlayerStateDTO
+  +getLobbyState(..) : LobbyEventDTO
+}
+
+class GameBroadcaster <<Component>> {
+  +bundleSenderFor(gameId) : Consumer<GameUpdateBundle>
+  +broadcastGameUpdateBundle(..) : void
+  +broadcastLobby(..) : void
+  +sendError(..) : void
+}
+
+' ── Authentication ───────────────────────────────────────────────────────
+class AuthController <<RestController>> {
+  +register(RegisterRequest) : ResponseEntity
+  +login(LoginRequest) : ResponseEntity
+  +logout() : void
+}
+
+class AuthService <<Service>> {
+  +register(RegisterRequest) : void
+}
+
+class CustomUserDetailsService <<UserDetailsService>> {
+  +loadUserByUsername(..) : UserDetails
+}
+
+' ── User ─────────────────────────────────────────────────────────────────
+class UserController <<RestController>> {
+  +getMyInfo() : UserProfileResponse
+}
+
+class UserService <<Service>> {
+  +findByUsername(..) : UserEntity
+  +getProfileByUsername(..) : UserProfileResponse
+}
+
+' ── Variants ─────────────────────────────────────────────────────────────
+class CatalogController <<RestController>> {
+  +getVariants() : List<VariantInfoDTO>
+}
+
+class GameCatalog <<catalog, static>>
+
+' ── Wiring ───────────────────────────────────────────────────────────────
+GameRestController      --> GameService
+GameRestController      --> GameBroadcaster
+GameWebSocketController --> GameService
+GameWebSocketController --> GameBroadcaster
+
+AuthController    --> AuthService
+AuthService       --> CustomUserDetailsService
+
+UserController --> UserService
+
+CatalogController ..> GameCatalog : reads
+
+@enduml

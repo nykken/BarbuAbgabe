@@ -1,0 +1,86 @@
+@startuml Database ERM
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+
+entity "users" as users {
+  * id : UUID <<PK>>
+  --
+  * username : varchar <<unique>>
+  * password_hash : varchar
+}
+
+entity "games" as games {
+  * id : UUID <<PK>>
+  --
+  * initial_seed : bigint
+  * variant_name : varchar
+  * status : varchar <<enum>>
+  * ranking_order : varchar <<enum>>
+  * deck_type : varchar <<enum>>
+  * created_at : timestamp
+  finished_at : timestamp
+  * default_bot_type : varchar <<enum>>
+  ..
+  index(status)
+}
+
+entity "game_contracts" as game_contracts {
+  * id : UUID <<PK>>
+  --
+  * game_id : UUID <<FK>>
+  * display_name : varchar
+  * contract_json : json
+  ..
+  unique(game_id, display_name)
+}
+
+entity "game_players" as game_players {
+  * id : UUID <<PK>>
+  --
+  * game_id : UUID <<FK>>
+  * position : varchar <<enum>>
+  ..
+  unique(game_id, position)
+}
+
+entity "human_players" as human_players {
+  * id : UUID <<PK, FK>>
+  --
+  * user_id : UUID <<FK>>
+  ..
+  index(user_id)
+}
+
+entity "bot_players" as bot_players {
+  * id : UUID <<PK, FK>>
+  --
+  * bot_type : varchar <<enum>>
+  * bot_name : varchar <<enum>>
+}
+
+entity "game_moves" as game_moves {
+  * id : UUID <<PK>>
+  --
+  * game_id : UUID <<FK>>
+  * seq_num : bigint <<identity>>
+  * move_json : json
+  * played_at : timestamp
+}
+
+' --- Relationships  ---
+games          ||--o{ game_contracts : "has contracts"
+games          ||--o{ game_players   : "has seats (<= 4)"
+
+' JOINED inheritance: each base row has exactly one subtype row (shared PK).
+game_players   ||--|| human_players  : "is-a (HUMAN)"
+game_players   ||--|| bot_players    : "is-a (BOT)"
+
+
+users          ||--o{ human_players  : "occupies"
+
+games          ||--o{ game_moves      : "move log"
+
+
+@enduml

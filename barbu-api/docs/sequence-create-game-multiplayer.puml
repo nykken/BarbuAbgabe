@@ -1,0 +1,62 @@
+@startuml
+title Create Game – Multiplayer Flow
+
+actor "Player 1\n(Creator)" as P
+participant "Frontend 1\n(React + Zustand)" as FE
+actor "Player 2" as P2
+participant "Frontend 2\n(React + Zustand)" as FE2
+participant "REST API" as REST
+participant "STOMP\n(WebSocket)" as STOMP
+participant "GameService" as SVC
+database "DB" as DB
+
+== Create the game ==
+P -> FE : select variant + mode, click "Create Game"
+FE -> REST : POST /api/games { variantId }
+REST -> SVC : createGame()
+SVC -> DB : save game, contracts, creator seat
+SVC --> REST : gameId
+REST --> FE : 201 Created — { gameId }
+
+== Connect to the game ==
+FE -> STOMP : connect to /ws, subscribe to game channels\n(/app/…/lobby · /app/…/public-state · /app/…/private-state)
+STOMP --> FE : lobby snapshot (creator seated, game not started)\npublic-state and private-state return null until game starts
+
+FE -> P : show Lobby screen
+
+== Other players join ==
+P2 -> FE2 : enter game code, click "Join Game"
+FE2 -> REST : POST /api/games/{id}/join
+REST -> SVC : joinGame()
+SVC -> DB : save seat
+REST -> STOMP : broadcastLobby()
+STOMP --> FE : /topic/games/{id}/lobby — updated seat list
+STOMP --> FE2 : /topic/games/{id}/lobby — updated seat list
+REST --> FE2 : 200 OK
+note right of REST : repeats for each additional player\n
+
+FE2 -> STOMP : connect to /ws, subscribe to game channels
+STOMP --> FE2 : lobby snapshot (current seats, game not started)
+FE2 -> P2 : show Lobby screen
+
+== Start the game ==
+P -> FE : click "Start Game"
+FE -> STOMP : SEND /app/games/{id}/lobby/start
+
+STOMP -> SVC : fillWithBots(gameId)
+SVC -> DB : save bot player rows
+SVC --> STOMP : LobbyEventDTO
+STOMP --> FE : /topic/games/{id}/lobby — all 4 seats filled
+STOMP --> FE2 : /topic/games/{id}/lobby — all 4 seats filled
+
+STOMP -> SVC : startGame(gameId)
+SVC -> DB : set status IN_PROGRESS; replay() → initialState
+SVC --> STOMP : GameUpdateBundle (initial state)
+STOMP --> FE : /topic/games/{id} — initial game state
+STOMP --> FE : /user/queue/games/{id}/private-state — Player 1's hand
+STOMP --> FE2 : /topic/games/{id} — initial game state
+STOMP --> FE2 : /user/queue/games/{id}/private-state — Player 2's hand
+FE -> P : show Game Board
+FE2 -> P2 : show Game Board
+
+@enduml

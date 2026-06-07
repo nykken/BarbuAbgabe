@@ -1,0 +1,26 @@
+ @startuml barbu-game-flow
+  title Barbu — Game Flow
+
+  start
+
+  note right
+    4 players (NORTH, EAST, SOUTH, WEST)
+    Each declare every contract exactly once
+  end note
+
+  repeat
+
+    repeat
+      :Deal cards to each player;
+      :Declarer picks a contract\nfrom their remaining set;
+      :Contract is played;
+    repeat while (Declarer has contracts remaining?) is (yes)
+    -> no;
+
+  repeat while (All 4 players have declared?) is (no)
+  -> yes;
+
+  :Rank players;
+
+  stop
+  @enduml

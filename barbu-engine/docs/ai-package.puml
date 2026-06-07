@@ -1,0 +1,131 @@
+@startuml ai-package
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+package "org.engine.ai" {
+
+    abstract class Bot {
+        # {abstract} search(): Move
+        + chooseMove(): Move
+        + describe(): String
+    }
+
+    abstract class "BaseSearchNode<T extends BaseSearchNode<T>>" as BaseSearchNode {
+        # parent: T
+        # moveFromParent: Move
+        # timesExplored: int
+        # marginSums: double[]
+        --
+        + getMoveFromParent(): Move
+        + getChildren(): List<T>
+        + {abstract} calculateUCT(): double
+        # normalizeScore(): double
+        + backpropagate(): void
+        + getBestMove(): Move
+        + {static} calculateMargins(): double[]
+    }
+
+    abstract class "BaseSearchTree<N extends BaseSearchNode<N>>" as BaseSearchTree {
+        # explorationConstant: double
+        # globalMinMargins: double[]
+        # globalMaxMargins: double[]
+        --
+        # updateGlobalBounds(): void
+        # simulate(): double[]
+        + getBestMove(): Move
+    }
+
+    class RandomMoveBot {
+        # search(): Move
+    }
+
+    class Determinizer <<final>> {
+        - {static} MAX_ATTEMPTS: int
+        --
+        + {static} sampleHands(): Map<Player, Hand>
+    }
+}
+
+package "org.engine.ai.mcts" {
+
+    class MctsNode {
+        - gameState: GameState
+        - unexploredMoves: ArrayList<Move>
+        --
+        + {static} createRoot(): MctsNode
+        + isTerminal(): boolean
+        + getActivePlayer(): Player
+        + calculateUCT(): double
+        ~ select(): MctsNode
+        ~ expand(): MctsNode
+    }
+
+    class MctsTree {
+        + runIteration(): void
+    }
+
+    class MctsBot {
+        - explorationConstant: double
+        - simulationBotSupplier: Supplier<Bot>
+        - contractNumTrees: int
+        - contractIterationsPerTree: int
+        - playNumTrees: int
+        - playIterationsPerTree: int
+        --
+        # search(): Move
+        + describe(): String
+    }
+}
+
+package "org.engine.ai.ismcts" {
+
+    class IsmctsNode {
+        ~ timesAvailable: int
+        --
+        + expand(): IsmctsNode
+        + calculateUCT(): double
+    }
+
+    class IsmctsTree {
+        + runIteration(): void
+    }
+
+    class IsmctsBot {
+        - simulationBotSupplier: Supplier<Bot>
+        - explorationConstant: double
+        - contractTotalIterations: int
+        - playTotalIterations: int
+        --
+        # search(): Move
+        + describe(): String
+    }
+}
+
+' Inheritance
+MctsNode --|> BaseSearchNode
+IsmctsNode --|> BaseSearchNode
+MctsTree --|> BaseSearchTree
+IsmctsTree --|> BaseSearchTree
+
+' Tree owns its root node; nodes own their children
+BaseSearchTree "1" o-- "1" BaseSearchNode : root
+BaseSearchNode "1" *-- "*" BaseSearchNode : children
+
+' Extends Bot
+RandomMoveBot --|> Bot
+MctsBot --|> Bot
+IsmctsBot --|> Bot
+
+' BaseSearchTree holds a Bot (simulation policy)
+BaseSearchTree "1" o-- "1" Bot : simulationBot
+
+' Bots create and drive their respective trees
+MctsBot ..> MctsTree : creates
+IsmctsBot ..> IsmctsTree : creates
+
+' Bots depend on Determinizer for hand sampling
+MctsBot ..> Determinizer : uses
+IsmctsBot ..> Determinizer : uses
+
+@enduml

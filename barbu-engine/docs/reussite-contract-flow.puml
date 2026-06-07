@@ -1,0 +1,30 @@
+@startuml reussite-contract-flow
+title Réussite Contract Flow
+
+start
+
+note right
+  Players build four suit piles on a tableau.
+  Goal: be the first to empty your hand.
+end note
+
+repeat
+
+  if (Player has a legal card?) then (yes)
+    :Player places a card on the tableau;
+    if (Hand now empty?) then (yes)
+      :Player has finished:\nrecord finishing position;
+    endif
+  else (no)
+    :Player passes;
+  endif
+
+  :Move to next active player\n(skip players who have finished);
+
+repeat while (Enough players have finished?) is (no)
+-> yes;
+
+:Score by finishing order;
+
+stop
+@enduml
