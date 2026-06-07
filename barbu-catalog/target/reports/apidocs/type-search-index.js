@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html","k":"18"},{"p":"com.barbu.catalog","l":"ContractDefinition","k":"11"},{"p":"com.barbu.catalog","l":"GameCatalog"},{"p":"com.barbu.catalog","l":"GameVariant","k":"11"}];updateSearchResults();

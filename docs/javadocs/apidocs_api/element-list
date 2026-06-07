@@ -1,0 +1,16 @@
+com.barbu.api
+com.barbu.api.authentication
+com.barbu.api.config
+com.barbu.api.exception
+com.barbu.api.game
+com.barbu.api.game.contract
+com.barbu.api.game.dto.rest
+com.barbu.api.game.dto.stomp
+com.barbu.api.game.dto.stomp.gameupdate
+com.barbu.api.game.dto.stomp.gameupdate.parts
+com.barbu.api.game.move
+com.barbu.api.game.player
+com.barbu.api.game.player.bot
+com.barbu.api.game.player.human
+com.barbu.api.user
+com.barbu.api.variants
