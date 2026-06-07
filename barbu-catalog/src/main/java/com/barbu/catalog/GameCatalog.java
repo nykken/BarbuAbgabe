@@ -133,17 +133,7 @@ public final class GameCatalog {
         );
     }
 
-    private static final String TINY_ID = "tiny";
 
-    public static final GameVariant TINY;
-
-    static {
-        var queensDef = queens(TINY_ID, 10);
-
-        TINY = new GameVariant (
-            TINY_ID, "Tiny", List.of(queensDef), Deck.Variant.FROM_SEVEN, GameSettings.RankingOrder.LOWEST_SCORE_WINS
-        );
-    }
 
 
     private static final String EXTENDED_ID = "extended";
@@ -180,7 +170,7 @@ public final class GameCatalog {
     // ── queries ─────────────────────────────────────────────────────────
 
     public static List<GameVariant> all() {
-        return List.of(STANDARD, POSITIVE, EXTENDED, TINY);
+        return List.of(STANDARD, POSITIVE, EXTENDED);
     }
 
     public static Optional<GameVariant> findById(String id) {
